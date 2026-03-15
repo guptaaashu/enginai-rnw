@@ -1,6 +1,6 @@
 import '../styles/Hero.css';
 
-export default function Hero() {
+export default function Hero({ onLoginClick }) {
   return (
     <section className="hero">
       <div className="hero-content">
@@ -8,7 +8,7 @@ export default function Hero() {
         <p className="hero-subtitle">
           The smartest way to level up your engineering skills — powered by an AI instructor that adapts to you.
         </p>
-        <button className="btn-primary btn-large">Start Learning Free →</button>
+        <button className="btn-primary btn-large" onClick={onLoginClick}>Start Learning Free →</button>
 
         <div className="chat-bubble">
           <div className="chat-avatar">AI</div>

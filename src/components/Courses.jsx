@@ -27,7 +27,7 @@ const courses = [
   },
 ];
 
-export default function Courses() {
+export default function Courses({ onLoginClick }) {
   return (
     <section className="courses">
       <h2>Available Courses</h2>
@@ -39,12 +39,12 @@ export default function Courses() {
             <p>{course.description}</p>
             <div className="course-footer">
               <span className="hours">⏱ {course.hours} hrs</span>
-              <a href="#" className="view-link">View Course →</a>
+              <a href="#" className="view-link" onClick={(e) => { e.preventDefault(); onLoginClick(); }}>View Course →</a>
             </div>
           </div>
         ))}
       </div>
-      <button className="btn-outline">View All Courses →</button>
+      <button className="btn-outline" onClick={onLoginClick}>View All Courses →</button>
     </section>
   );
 }
