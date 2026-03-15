@@ -1,0 +1,94 @@
+.tutorial {
+  max-width: 720px;
+}
+
+.tutorial-chapter-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #3b82f6;
+  background: rgba(59,130,246,0.1);
+  border: 1px solid rgba(59,130,246,0.2);
+  padding: 4px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+}
+
+.tutorial-heading {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 32px;
+  line-height: 1.3;
+}
+
+.tutorial-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-bottom: 32px;
+}
+
+.tutorial-text-block h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 10px;
+}
+
+.tutorial-text-block p {
+  font-size: 15px;
+  color: #9ca3af;
+  line-height: 1.8;
+}
+
+.tutorial-code {
+  background: #0d1526;
+  border: 1px solid #1e2d4a;
+  border-left: 3px solid #3b82f6;
+  border-radius: 10px;
+  padding: 20px 24px;
+  overflow-x: auto;
+}
+
+.tutorial-code code {
+  font-family: 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
+  color: #93c5fd;
+  line-height: 1.7;
+  white-space: pre;
+}
+
+.tutorial-takeaway {
+  display: flex;
+  gap: 14px;
+  background: rgba(99,102,241,0.07);
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 36px;
+}
+
+.takeaway-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.tutorial-takeaway p {
+  font-size: 14px;
+  color: #c7d2fe;
+  line-height: 1.7;
+}
+
+.tutorial-nav {
+  display: flex;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.tutorial-nav button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
