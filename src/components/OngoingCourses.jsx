@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import '../styles/OngoingCourses.css';
 
 const ongoing = [
@@ -20,6 +21,7 @@ const ongoing = [
 ];
 
 export default function OngoingCourses() {
+  const navigate = useNavigate();
   return (
     <section className="ongoing">
       <h2>Continue Learning</h2>
@@ -38,7 +40,7 @@ export default function OngoingCourses() {
             </div>
             <div className="ongoing-card-footer">
               <span className="progress-label">{course.progress}% complete</span>
-              <button className="btn-primary">Continue →</button>
+              <button className="btn-primary" onClick={() => navigate(`/course/${course.id}`)}>Continue →</button>
             </div>
           </div>
         ))}

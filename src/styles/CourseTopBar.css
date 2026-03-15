@@ -1,0 +1,64 @@
+.course-topbar {
+  height: 60px;
+  background: #0d1526;
+  border-bottom: 1px solid #1e2d4a;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s;
+  padding: 0;
+}
+
+.back-btn:hover { color: #fff; }
+
+.course-topbar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.progress-track {
+  width: 140px;
+  height: 5px;
+  background: #1e2d4a;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
+}

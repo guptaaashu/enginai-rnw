@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import '../styles/AllCourses.css';
 
 const courses = [
@@ -10,6 +11,7 @@ const courses = [
 ];
 
 export default function AllCourses() {
+  const navigate = useNavigate();
   return (
     <section className="all-courses">
       <h2>All Courses</h2>
@@ -21,7 +23,7 @@ export default function AllCourses() {
             <p>{course.description}</p>
             <div className="course-footer">
               <span className="hours">⏱ {course.hours} hrs</span>
-              <button className="btn-primary">Start Course</button>
+              <button className="btn-primary" onClick={() => navigate(`/course/${course.id}`)}>Start Course</button>
             </div>
           </div>
         ))}
