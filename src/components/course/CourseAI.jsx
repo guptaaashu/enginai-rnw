@@ -1,44 +1,70 @@
 import { useState, useRef, useEffect } from 'react';
+import { streamChat } from '../../services/chatService';
 import '../../styles/CourseAI.css';
-
-const RESPONSES = [
-  (ch) => `Great question about ${ch}! The key thing to understand is that this concept is foundational — everything in later chapters builds on it.`,
-  () => `Think of it this way: in production systems, this is one of the most common sources of bugs. Understanding it deeply will save you hours of debugging.`,
-  (ch) => `In the context of ${ch}, this is exactly what senior engineers get asked in system design interviews. Let me know if you want me to break it down further.`,
-  () => `That's a nuanced question. The short answer is: it depends on your consistency vs availability trade-off. In most real-world systems, you'd choose eventual consistency here.`,
-  () => `This is covered in the next chapter too, but the core idea is: always design for failure. Assume any component can go down at any time.`,
-];
 
 export default function CourseAI({ chapterTitle }) {
   const [messages, setMessages] = useState([
-    { from: 'bot', text: `I'm here to help with "${chapterTitle}". Ask me anything — concepts, examples, or how this applies in real systems.` }
+    { id: 0, from: 'bot', text: `I'm here to help with "${chapterTitle}". Ask me anything — concepts, examples, or how this applies in real systems.`, done: true }
   ]);
-  const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  const [input, setInput]         = useState('');
+  const [isTyping, setIsTyping]   = useState(false);
+  const [streaming, setStreaming] = useState(false);
   const bottomRef = useRef(null);
+  const cancelRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  // Reset when chapter changes
+  // Cancel stream and reset when chapter changes
   useEffect(() => {
+    cancelRef.current?.();
+    setIsTyping(false);
+    setStreaming(false);
     setMessages([
-      { from: 'bot', text: `I'm here to help with "${chapterTitle}". Ask me anything — concepts, examples, or how this applies in real systems.` }
+      { id: 0, from: 'bot', text: `I'm here to help with "${chapterTitle}". Ask me anything — concepts, examples, or how this applies in real systems.`, done: true }
     ]);
   }, [chapterTitle]);
 
+  useEffect(() => () => cancelRef.current?.(), []);
+
   function send() {
     const text = input.trim();
-    if (!text || isTyping) return;
-    setMessages((prev) => [...prev, { from: 'user', text }]);
+    if (!text || isTyping || streaming) return;
+
+    cancelRef.current?.();
+    setMessages((prev) => [...prev, { id: Date.now(), from: 'user', text }]);
     setInput('');
     setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
-      const fn = RESPONSES[Math.floor(Math.random() * RESPONSES.length)];
-      setMessages((prev) => [...prev, { from: 'bot', text: fn(chapterTitle) }]);
-    }, 800 + Math.random() * 400);
+
+    let botMsgId = null; // closure var — set once on first chunk, never via state
+
+    const cancel = streamChat({
+      message: text,
+      context: { type: 'course', chapterTitle },
+      onChunk: (chunk) => {
+        if (botMsgId === null) {
+          // First chunk — create the bot message
+          botMsgId = Date.now();
+          setIsTyping(false);
+          setStreaming(true);
+          setMessages((msgs) => [...msgs, { id: botMsgId, from: 'bot', text: chunk, done: false }]);
+        } else {
+          // Subsequent chunks — append
+          setMessages((msgs) =>
+            msgs.map((m) => m.id === botMsgId ? { ...m, text: m.text + chunk } : m)
+          );
+        }
+      },
+      onDone: () => {
+        setStreaming(false);
+        setMessages((msgs) =>
+          msgs.map((m) => m.id === botMsgId ? { ...m, done: true } : m)
+        );
+      },
+    });
+
+    cancelRef.current = cancel;
   }
 
   return (
@@ -52,8 +78,11 @@ export default function CourseAI({ chapterTitle }) {
       </div>
 
       <div className="course-ai-messages">
-        {messages.map((msg, i) => (
-          <div key={i} className={`ai-msg ${msg.from}`}>{msg.text}</div>
+        {messages.map((msg) => (
+          <div key={msg.id} className={`ai-msg ${msg.from}`}>
+            {msg.text}
+            {msg.from === 'bot' && !msg.done && <span className="ai-cursor">|</span>}
+          </div>
         ))}
         {isTyping && (
           <div className="ai-msg bot typing">
@@ -70,8 +99,9 @@ export default function CourseAI({ chapterTitle }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && send()}
+          disabled={streaming}
         />
-        <button className="course-ai-send" onClick={send} disabled={!input.trim() || isTyping}>↑</button>
+        <button className="course-ai-send" onClick={send} disabled={!input.trim() || isTyping || streaming}>↑</button>
       </div>
     </aside>
   );
