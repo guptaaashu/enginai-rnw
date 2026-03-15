@@ -16,7 +16,7 @@ export default function AuthCallback() {
       window.history.replaceState({}, '', '/auth/callback');
     }
 
-    const redirectTo = localStorage.getItem('redirect_after_login') || '/welcome';
+    const redirectTo = localStorage.getItem('redirect_after_login') || '/home';
     localStorage.removeItem('redirect_after_login');
     navigate(redirectTo, { replace: true });
   }, []);
