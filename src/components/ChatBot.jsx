@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
+import { streamChat } from '../services/chatService';
 import '../styles/ChatBot.css';
 
 const CAPABILITIES = [
-  { icon: '🗺️', label: 'Career Roadmap',       desc: 'Get a personalized path to your dream role' },
-  { icon: '🎯', label: 'Course Match',           desc: 'Find the perfect course for your goals' },
-  { icon: '⚡', label: 'Interview Prep',         desc: 'Ace your next system design round' },
-  { icon: '📈', label: 'Skill Gap Analysis',     desc: 'Know exactly what to learn next' },
+  { icon: '🗺️', label: 'Career Roadmap',    desc: 'Get a personalized path to your dream role' },
+  { icon: '🎯', label: 'Course Match',        desc: 'Find the perfect course for your goals' },
+  { icon: '⚡', label: 'Interview Prep',      desc: 'Ace your next system design round' },
+  { icon: '📈', label: 'Skill Gap Analysis',  desc: 'Know exactly what to learn next' },
 ];
 
 const QUICK_PROMPTS = [
@@ -14,37 +15,6 @@ const QUICK_PROMPTS = [
   'Best courses for FAANG interviews',
   'How do I get into AI engineering?',
 ];
-
-const RESPONSES = [
-  {
-    text: "Based on your profile, Kafka Architecture is your highest-leverage next step. Event-driven systems appear in 78% of senior engineering interviews at top companies. Engineers who complete this course report a 2.4x increase in system design confidence.",
-    course: { icon: 'KFK', color: 'purple', title: 'Kafka Architecture', hours: 16, match: 98 },
-  },
-  {
-    text: "For FAANG prep, the winning combo is System Design + Redis. Together they cover ~80% of L5/L6 interview content. I've seen this pair help engineers go from mid-level to senior offers at Google and Meta.",
-    course: { icon: 'SYS', color: 'red', title: 'System Design', hours: 20, match: 95 },
-  },
-  {
-    text: "Your 3-month roadmap: Month 1 → Kafka Architecture (event systems). Month 2 → Kubernetes Mastery (infra ownership). Month 3 → System Design (interview readiness). This path mirrors what senior engineers at Uber and Airbnb actually use.",
-    course: { icon: 'K8S', color: 'blue', title: 'Kubernetes Mastery', hours: 18, match: 92 },
-  },
-  {
-    text: "MCP (Model Context Protocol) is the most underrated skill in 2026. Companies are paying 30–40% premiums for engineers who can integrate AI into production systems. Early movers on this course are already getting inbound recruiter interest.",
-    course: { icon: 'MCP', color: 'blue', title: 'Mastering MCP', hours: 13, match: 96 },
-  },
-  {
-    text: "Redis expertise is a superpower for backend roles. It's in the stack at Airbnb, Twitter, Uber, and every high-scale fintech. Knowing Redis deeply signals senior-level thinking about performance and architecture.",
-    course: { icon: 'RDS', color: 'red', title: 'Advanced Redis', hours: 15, match: 91 },
-  },
-  {
-    text: "GraphQL is the standard for API design at product-led companies. If you're targeting fullstack or platform engineering roles at Series B+ startups, this is a must-have on your resume.",
-    course: { icon: 'GQL', color: 'purple', title: 'GraphQL in Depth', hours: 12, match: 89 },
-  },
-];
-
-function getResponse() {
-  return RESPONSES[Math.floor(Math.random() * RESPONSES.length)];
-}
 
 function TypingIndicator() {
   return (
@@ -74,14 +44,15 @@ function CourseRecommendation({ course }) {
 }
 
 export default function ChatBot() {
-  const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  const [open, setOpen]           = useState(false);
+  const [messages, setMessages]   = useState([]);
+  const [input, setInput]         = useState('');
+  const [isTyping, setIsTyping]   = useState(false);
   const [streamingId, setStreamingId] = useState(null);
-  const [started, setStarted] = useState(false);
-  const bottomRef = useRef(null);
-  const inputRef = useRef(null);
+  const [started, setStarted]     = useState(false);
+  const bottomRef  = useRef(null);
+  const inputRef   = useRef(null);
+  const cancelRef  = useRef(null);  // holds the SSE cancel function
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -90,45 +61,75 @@ export default function ChatBot() {
   useEffect(() => {
     if (open && !started) {
       setStarted(true);
-      setTimeout(() => {
-        streamBotMessage(
-          "Hey! I'm your AI Instructor — not just a chatbot. I analyze your goals, match you with courses, and build you a real learning roadmap. What are you working towards right now?",
-          null
-        );
-      }, 400);
+      startStream("Hey! I'm your AI Instructor — not just a chatbot. I analyze your goals, match you with courses, and build you a real learning roadmap. What are you working towards right now?", null);
     }
     if (open) setTimeout(() => inputRef.current?.focus(), 300);
   }, [open]);
 
-  function streamBotMessage(text, course) {
+  // Cancel any in-progress stream on unmount
+  useEffect(() => () => cancelRef.current?.(), []);
+
+  function startStream(greeting, course) {
     const id = Date.now();
-    setMessages((prev) => [...prev, { id, from: 'bot', text: '', course, done: false }]);
+    setMessages((prev) => [...prev, { id, from: 'bot', text: '', course: null, done: false }]);
     setStreamingId(id);
+
+    // For the greeting we pass text directly as a single chunk sequence
+    const words = greeting.split(' ');
     let i = 0;
-    const iv = setInterval(() => {
-      i++;
-      setMessages((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, text: text.slice(0, i) } : m))
-      );
-      if (i >= text.length) {
-        clearInterval(iv);
-        setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, done: true } : m)));
+    let cancelled = false;
+    function next() {
+      if (cancelled) return;
+      if (i >= words.length) {
+        setMessages((prev) => prev.map((m) => m.id === id ? { ...m, course, done: true } : m));
         setStreamingId(null);
+        return;
       }
-    }, 14);
+      setMessages((prev) => prev.map((m) => m.id === id ? { ...m, text: m.text + (i === 0 ? '' : ' ') + words[i] } : m));
+      i++;
+      setTimeout(next, 30 + Math.random() * 40);
+    }
+    setTimeout(next, 400);
+    cancelRef.current = () => { cancelled = true; };
   }
 
   function send(text) {
     const msg = (text || input).trim();
     if (!msg || isTyping || streamingId) return;
+
+    cancelRef.current?.();
     setMessages((prev) => [...prev, { id: Date.now(), from: 'user', text: msg }]);
     setInput('');
     setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
-      const r = getResponse();
-      streamBotMessage(r.text, r.course);
-    }, 900 + Math.random() * 500);
+
+    let botMsgId = null; // closure var — set once on first chunk, never via state
+
+    const cancel = streamChat({
+      message: msg,
+      context: null,
+      onChunk: (chunk) => {
+        if (botMsgId === null) {
+          // First chunk — create the bot message
+          botMsgId = Date.now();
+          setIsTyping(false);
+          setStreamingId(botMsgId);
+          setMessages((msgs) => [...msgs, { id: botMsgId, from: 'bot', text: chunk, course: null, done: false }]);
+        } else {
+          // Subsequent chunks — append to existing bot message
+          setMessages((msgs) =>
+            msgs.map((m) => m.id === botMsgId ? { ...m, text: m.text + chunk } : m)
+          );
+        }
+      },
+      onDone: ({ course }) => {
+        setStreamingId(null);
+        setMessages((msgs) =>
+          msgs.map((m) => m.id === botMsgId ? { ...m, course, done: true } : m)
+        );
+      },
+    });
+
+    cancelRef.current = cancel;
   }
 
   return (
