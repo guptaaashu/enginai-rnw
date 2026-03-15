@@ -1,10 +1,11 @@
 // ─── Chat streaming service ───────────────────────────────────────────────────
+import { apiFetch } from './apiClient';
+
 // REAL (uncomment when Spring Boot is ready):
 //
 //   const controller = new AbortController();
-//   fetch('/api/chat/stream', {
+//   apiFetch('/api/chat/stream', {
 //     method: 'POST',
-//     headers: { 'Content-Type': 'application/json' },
 //     body: JSON.stringify({ message, context }),
 //     signal: controller.signal,
 //   }).then(async (res) => {

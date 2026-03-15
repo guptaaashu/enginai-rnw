@@ -1,4 +1,5 @@
 // Mock course service — replace fetch() calls when backend is ready
+import { apiFetch } from './apiClient';
 
 // ─── Course pages (NO answers here — they come from submitQuiz) ───────────────
 
@@ -192,7 +193,7 @@ const GENERIC_COURSES = {
 
 export function getCourse(courseId) {
   // ── REAL ──
-  // return fetch(`/api/courses/${courseId}/pages`).then((r) => r.json());
+  // return apiFetch(`/api/courses/${courseId}/pages`).then((r) => r.json());
 
   // ── MOCK ──
   return new Promise((resolve, reject) => {
@@ -208,9 +209,8 @@ export function submitQuiz(courseId, pageId, answers) {
   // answers: [{ id, type, selected? (mcq index), text? (written) }]
 
   // ── REAL ──
-  // return fetch(`/api/courses/${courseId}/quiz/${pageId}/submit`, {
+  // return apiFetch(`/api/courses/${courseId}/quiz/${pageId}/submit`, {
   //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
   //   body: JSON.stringify({ answers }),
   // }).then((r) => r.json());
 
