@@ -17,13 +17,13 @@ export function setToken(token) {
  *     stores the new AT, then retries the original request.
  */
 export async function apiFetch(url, options = {}) {
-  const res = await fetch(url, buildOptions(options));
+  const res = await fetch(`${BACKEND_URL}${url}`, buildOptions(options));
 
   if (res.status === 401) {
     const newAt = await refreshAccessToken();
     if (newAt) {
       _accessToken = newAt;
-      return fetch(url, buildOptions(options)); // retry once with new AT
+      return fetch(`${BACKEND_URL}${url}`, buildOptions(options)); // retry once with new AT
     }
   }
 
