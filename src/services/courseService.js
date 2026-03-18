@@ -212,16 +212,31 @@ export function getEnrolledCourses() {
 
 export function getCourse(courseId) {
   // ── REAL ──
-  // return apiFetch(`/api/courses/${courseId}/pages`).then((r) => r.json());
+  return apiFetch(`/api/courses/${courseId}`).then((r) => r.json());
 
   // ── MOCK ──
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const course = MOCK_COURSES[courseId] || GENERIC_COURSES[courseId];
-      if (course) resolve(course);
-      else reject(new Error('Course not found'));
-    }, 700);
-  });
+  // return new Promise((resolve, reject) => {
+  //   setTimeout(() => {
+  //     const course = MOCK_COURSES[courseId] || GENERIC_COURSES[courseId];
+  //     if (course) resolve(course);
+  //     else reject(new Error('Course not found'));
+  //   }, 700);
+  // });
+}
+
+export function getPage(courseId, pageId) {
+  // ── REAL ──
+  return apiFetch(`/api/courses/${courseId}/pages/${pageId}`).then((r) => r.json());
+
+  // ── MOCK ──
+  // return new Promise((resolve, reject) => {
+  //   setTimeout(() => {
+  //     const course = MOCK_COURSES[courseId] || GENERIC_COURSES[courseId];
+  //     const page = course?.pages.find((p) => p.id === pageId);
+  //     if (page) resolve(page);
+  //     else reject(new Error('Page not found'));
+  //   }, 400);
+  // });
 }
 
 export function submitQuiz(courseId, pageId, answers) {
