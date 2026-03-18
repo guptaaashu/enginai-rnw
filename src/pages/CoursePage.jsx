@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { getCourse } from '../services/courseService';
+import { getCourse, getPage } from '../services/courseService';
+import { useAuth } from '../context/AuthContext';
 import CourseTopBar from '../components/course/CourseTopBar';
 import TrackSidebar from '../components/course/TrackSidebar';
 import TutorialContent from '../components/course/TutorialContent';
@@ -10,27 +11,45 @@ import '../styles/CoursePage.css';
 
 export default function CoursePage() {
   const { courseId } = useParams();
+  const { loading: authLoading } = useAuth();
   const [course, setCourse] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [currentPageId, setCurrentPageId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(null);
   const [completedIds, setCompletedIds] = useState([]);
+  const [courseLoading, setCourseLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(false);
+  const [error, setError] = useState(null);
 
+  // Load course stubs + resume position — wait for auth to restore session first
   useEffect(() => {
-    setLoading(true);
+    if (authLoading) return;
+    setCourseLoading(true);
     getCourse(Number(courseId))
       .then((data) => {
         setCourse(data);
-        setCurrentPageId(data.pages[0].id);
-        setLoading(false);
+        setCompletedIds(data.completedPageIds || []);
+        setCurrentPageId(data.currentPageId || data.pages[0]?.id);
+        setCourseLoading(false);
       })
       .catch((err) => {
         setError(err.message);
-        setLoading(false);
+        setCourseLoading(false);
       });
-  }, [courseId]);
+  }, [courseId, authLoading]);
 
-  if (loading) return (
+  // Load full page content whenever currentPageId changes
+  useEffect(() => {
+    if (!currentPageId) return;
+    setPageLoading(true);
+    getPage(Number(courseId), currentPageId)
+      .then((data) => {
+        setCurrentPage(data);
+        setPageLoading(false);
+      })
+      .catch(() => setPageLoading(false));
+  }, [courseId, currentPageId]);
+
+  if (courseLoading) return (
     <div className="course-loading">
       <div className="loading-spinner" />
       <p>Loading course...</p>
@@ -43,10 +62,9 @@ export default function CoursePage() {
     </div>
   );
 
-  const pages       = course.pages;
-  const currentPage = pages.find((p) => p.id === currentPageId);
-  const currentIdx  = pages.findIndex((p) => p.id === currentPageId);
-  const isTutorial  = currentPage.type === 'tutorial';
+  const pages      = course.pages;
+  const currentIdx = pages.findIndex((p) => p.id === currentPageId);
+  const isTutorial = currentPage?.type === 'tutorial';
 
   function goTo(id) {
     setCurrentPageId(id);
@@ -81,27 +99,34 @@ export default function CoursePage() {
         />
 
         <main className="course-main">
-          {isTutorial
-            ? <TutorialContent
-                page={currentPage}
-                onNext={goNext}
-                onPrev={goPrev}
-                hasNext={currentIdx < pages.length - 1}
-                hasPrev={currentIdx > 0}
-              />
-            : <QuestionContent
-                page={currentPage}
-                courseId={course.id}
-                onNext={goNext}
-                onPrev={goPrev}
-                hasNext={currentIdx < pages.length - 1}
-                hasPrev={currentIdx > 0}
-                onComplete={() => setCompletedIds((prev) => prev.includes(currentPageId) ? prev : [...prev, currentPageId])}
-              />
-          }
+          {pageLoading ? (
+            <div className="course-loading">
+              <div className="loading-spinner" />
+            </div>
+          ) : currentPage && (
+            isTutorial
+              ? <TutorialContent
+                  page={currentPage}
+                  onNext={goNext}
+                  onPrev={goPrev}
+                  hasNext={currentIdx < pages.length - 1}
+                  hasPrev={currentIdx > 0}
+                />
+              : <QuestionContent
+                  page={currentPage}
+                  courseId={course.id}
+                  onNext={goNext}
+                  onPrev={goPrev}
+                  hasNext={currentIdx < pages.length - 1}
+                  hasPrev={currentIdx > 0}
+                  onComplete={() => setCompletedIds((prev) => prev.includes(currentPageId) ? prev : [...prev, currentPageId])}
+                />
+          )}
         </main>
 
-        {isTutorial && <CourseAI chapterTitle={currentPage.title} />}
+        {isTutorial && !pageLoading && currentPage && (
+          <CourseAI chapterTitle={currentPage.title} />
+        )}
       </div>
     </div>
   );
