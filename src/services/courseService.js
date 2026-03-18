@@ -194,16 +194,19 @@ const GENERIC_COURSES = {
 export function getAllCourses() {
   // ── REAL ──
   return apiFetch('/api/courses').then((r) => r.json());
+}
+
+export function getEnrolledCourses() {
+  // ── REAL ──
+  return apiFetch('/api/courses/enrolled').then((r) => r.json());
 
   // ── MOCK ──
   // return new Promise((resolve) => {
   //   setTimeout(() => {
   //     resolve([
-  //       { id: 1, title: 'DSA in Java',        description: 'Master Data Structures and Algorithms using Java from scratch.', thumbnailUrl: null, level: 'BEGINNER',      category: 'DSA'           },
-  //       { id: 2, title: 'System Design',       description: 'Learn to design scalable systems like a senior engineer.',       thumbnailUrl: null, level: 'ADVANCED',      category: 'System Design' },
-  //       { id: 3, title: 'Spring Boot Mastery', description: 'Build production-ready REST APIs with Spring Boot 3.',           thumbnailUrl: null, level: 'INTERMEDIATE',  category: 'Backend'       },
+  //       { id: 1, title: 'DSA in Java', thumbnailUrl: null, level: 'BEGINNER', category: 'DSA', completedPages: 3, totalPages: 10, currentPageId: 4 },
   //     ]);
-  //   }, 700);
+  //   }, 600);
   // });
 }
 
