@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { getCourse, getPage } from '../services/courseService';
+import { getCourse, getPage, completePage } from '../services/courseService';
 import { useAuth } from '../context/AuthContext';
 import CourseTopBar from '../components/course/CourseTopBar';
 import TrackSidebar from '../components/course/TrackSidebar';
@@ -74,6 +74,7 @@ export default function CoursePage() {
   function goNext() {
     if (currentIdx < pages.length - 1) {
       setCompletedIds((prev) => prev.includes(currentPageId) ? prev : [...prev, currentPageId]);
+      if (isTutorial) completePage(Number(courseId), currentPageId);
       goTo(pages[currentIdx + 1].id);
     }
   }
