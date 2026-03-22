@@ -1,12 +1,29 @@
-import { useState } from 'react';
-import { submitQuiz } from '../../services/courseService';
+import { useState, useEffect } from 'react';
+import { submitQuiz, getQuizResult } from '../../services/courseService';
 import '../../styles/QuestionContent.css';
 
-export default function QuestionContent({ page, courseId, onPrev, onNext, hasPrev, hasNext, onComplete }) {
+export default function QuestionContent({ page, courseId, isCompleted, onPrev, onNext, hasPrev, hasNext, onComplete }) {
   const questions = page.content.questions;
   const [answers, setAnswers]   = useState({});
   const [loading, setLoading]   = useState(false);
-  const [results, setResults]   = useState(null); // { id, type, correct?, explanation?, modelAnswer? }[]
+  const [results, setResults]   = useState(null);
+
+  // On mount: if page was already submitted, fetch and restore previous results
+  useEffect(() => {
+    if (!isCompleted) return;
+    getQuizResult(courseId, page.id).then((res) => {
+      setResults(res);
+      // Restore answers state so UI highlights previous selections
+      const restored = {};
+      res.forEach((r) => {
+        const q = questions.find((q) => q.id === r.questionId);
+        if (!q) return;
+        if (r.type === 'mcq') restored[q.id] = q.options.indexOf(r.userAnswer);
+        else restored[q.id] = r.userAnswer;
+      });
+      setAnswers(restored);
+    }).catch(() => {}); // silently ignore — user will just see blank quiz
+  }, [page.id]);
 
   function setAnswer(id, value) {
     setAnswers((prev) => ({ ...prev, [id]: value }));

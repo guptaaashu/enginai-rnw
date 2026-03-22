@@ -239,6 +239,14 @@ export function getPage(courseId, pageId) {
   // });
 }
 
+export function getQuizResult(courseId, pageId) {
+  // ── REAL ──
+  return apiFetch(`/api/courses/${courseId}/quiz/${pageId}/result`).then((r) => r.json());
+
+  // ── MOCK ──
+  // return Promise.resolve([]);
+}
+
 export function completePage(courseId, pageId) {
   // ── REAL ──
   return apiFetch(`/api/courses/${courseId}/pages/${pageId}/complete`, { method: 'POST' });
