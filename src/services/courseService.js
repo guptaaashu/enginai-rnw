@@ -239,23 +239,32 @@ export function getPage(courseId, pageId) {
   // });
 }
 
-export function submitQuiz(courseId, pageId, answers) {
-  // answers: [{ id, type, selected? (mcq index), text? (written) }]
+export function submitQuiz(courseId, pageId, answersMap) {
+  // answersMap: { [questionId]: answerText }  — option text for MCQ, response text for written
 
   // ── REAL ──
-  // return apiFetch(`/api/courses/${courseId}/quiz/${pageId}/submit`, {
-  //   method: 'POST',
-  //   body: JSON.stringify({ answers }),
-  // }).then((r) => r.json());
+  return apiFetch(`/api/courses/${courseId}/quiz/${pageId}/submit`, {
+    method: 'POST',
+    body: JSON.stringify({ answers: answersMap }),
+  }).then((r) => r.json());
 
   // ── MOCK ──
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const key = `${courseId}_${pageId}`;
-      const course = MOCK_COURSES[courseId] || GENERIC_COURSES[courseId];
-      const page   = course?.pages.find((p) => p.id === pageId);
-      const results = MOCK_ANSWER_KEYS[key] || genericAnswerKey(page?.content.questions || []);
-      resolve({ results });
-    }, 900);
-  });
+  // return new Promise((resolve) => {
+  //   setTimeout(() => {
+  //     const key = `${courseId}_${pageId}`;
+  //     const course = MOCK_COURSES[courseId] || GENERIC_COURSES[courseId];
+  //     const page   = course?.pages.find((p) => p.id === pageId);
+  //     const questions = page?.content.questions || [];
+  //     const rawKey = MOCK_ANSWER_KEYS[key] || genericAnswerKey(questions);
+  //     const results = rawKey.map((r) => {
+  //       const q = questions.find((q) => q.id === r.id);
+  //       if (r.type === 'mcq') {
+  //         const correctAnswer = q?.options[r.correct] || null;
+  //         return { questionId: r.id, type: 'mcq', correct: answersMap[r.id] === correctAnswer, correctAnswer, modelAnswer: null };
+  //       }
+  //       return { questionId: r.id, type: 'written', correct: null, correctAnswer: null, modelAnswer: r.modelAnswer };
+  //     });
+  //     resolve(results);
+  //   }, 900);
+  // });
 }
