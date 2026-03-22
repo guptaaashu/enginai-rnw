@@ -239,6 +239,14 @@ export function getPage(courseId, pageId) {
   // });
 }
 
+export function completePage(courseId, pageId) {
+  // ── REAL ──
+  return apiFetch(`/api/courses/${courseId}/pages/${pageId}/complete`, { method: 'POST' });
+
+  // ── MOCK ──
+  // return Promise.resolve();
+}
+
 export function submitQuiz(courseId, pageId, answersMap) {
   // answersMap: { [questionId]: answerText }  — option text for MCQ, response text for written
 
