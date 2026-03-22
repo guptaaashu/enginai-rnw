@@ -116,6 +116,7 @@ export default function CoursePage() {
               : <QuestionContent
                   page={currentPage}
                   courseId={course.id}
+                  isCompleted={completedIds.includes(currentPageId)}
                   onNext={goNext}
                   onPrev={goPrev}
                   hasNext={currentIdx < pages.length - 1}
