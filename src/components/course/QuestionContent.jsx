@@ -23,15 +23,16 @@ export default function QuestionContent({ page, courseId, onPrev, onNext, hasPre
     if (!allAnswered || loading) return;
     setLoading(true);
 
-    const payload = questions.map((q) => ({
-      id:       q.id,
-      type:     q.type,
-      selected: q.type === 'mcq'     ? answers[q.id] : undefined,
-      text:     q.type === 'written' ? answers[q.id] : undefined,
-    }));
+    // Build { questionId: answerText } — option text for MCQ, response text for written
+    const answersMap = Object.fromEntries(
+      questions.map((q) => [
+        q.id,
+        q.type === 'mcq' ? q.options[answers[q.id]] : answers[q.id],
+      ])
+    );
 
     try {
-      const { results: res } = await submitQuiz(courseId, page.id, payload);
+      const res = await submitQuiz(courseId, page.id, answersMap);
       setResults(res);
       onComplete();
     } finally {
@@ -39,9 +40,10 @@ export default function QuestionContent({ page, courseId, onPrev, onNext, hasPre
     }
   }
 
-  const resultMap = results ? Object.fromEntries(results.map((r) => [r.id, r])) : {};
+  // resultMap keyed by questionId
+  const resultMap = results ? Object.fromEntries(results.map((r) => [r.questionId, r])) : {};
 
-  const mcqScore  = results ? results.filter((r) => r.type === 'mcq' && answers[r.id] === r.correct).length : 0;
+  const mcqScore  = results ? results.filter((r) => r.type === 'mcq' && r.correct === true).length : 0;
   const totalMcq  = questions.filter((q) => q.type === 'mcq').length;
 
   return (
@@ -76,8 +78,8 @@ export default function QuestionContent({ page, courseId, onPrev, onNext, hasPre
                   {q.options.map((opt, i) => {
                     let cls = 'option';
                     if (res) {
-                      if (i === res.correct)        cls += ' correct';
-                      else if (i === answers[q.id]) cls += ' wrong';
+                      if (opt === res.correctAnswer)  cls += ' correct';
+                      else if (i === answers[q.id])   cls += ' wrong';
                     } else if (i === answers[q.id]) {
                       cls += ' selected';
                     }
@@ -89,11 +91,10 @@ export default function QuestionContent({ page, courseId, onPrev, onNext, hasPre
                     );
                   })}
                   {res && (
-                    <div className={`result-box ${answers[q.id] === res.correct ? 'correct' : 'wrong'}`}>
+                    <div className={`result-box ${res.correct ? 'correct' : 'wrong'}`}>
                       <p className="result-title">
-                        {answers[q.id] === res.correct ? '✓ Correct!' : '✗ Incorrect'}
+                        {res.correct ? '✓ Correct!' : '✗ Incorrect'}
                       </p>
-                      <p className="result-explanation">{res.explanation}</p>
                     </div>
                   )}
                 </div>
